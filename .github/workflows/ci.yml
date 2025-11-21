@@ -54,4 +54,4 @@ jobs:
       # Check minimal build.
       - run: cargo check --tests --lib --no-default-features
       # Check alternative decoders.
-      - run: cargo check --tests --lib --no-default-features --features claxon,hound,minimp3,lewton
+      - run: cargo check --tests --lib --no-default-features --features claxon,hound,lewton

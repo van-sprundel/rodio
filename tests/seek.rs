@@ -12,7 +12,6 @@ use std::time::Duration;
 
 #[cfg(any(
     feature = "claxon",
-    feature = "minimp3",
     feature = "symphonia-aac",
     feature = "symphonia-flac",
     feature = "symphonia-mp3",
@@ -26,10 +25,6 @@ use std::time::Duration;
 #[cfg_attr(
     all(feature = "symphonia-ogg", feature = "symphonia-vorbis"),
     case("ogg", true, "symphonia")
-)]
-#[cfg_attr(
-    all(feature = "minimp3", not(feature = "symphonia-mp3")),
-    case("mp3", false, "minimp3")
 )]
 #[cfg_attr(
     all(feature = "hound", not(feature = "symphonia-wav")),
@@ -82,7 +77,6 @@ fn supported_decoders(#[case] format: &'static str, #[case] decoder_name: &'stat
 
 #[cfg(any(
     feature = "claxon",
-    feature = "minimp3",
     feature = "symphonia-flac",
     feature = "symphonia-mp3",
     feature = "symphonia-isomp4",

@@ -9,7 +9,6 @@ Rust playback library.
 Playback is handled by [cpal](https://github.com/RustAudio/cpal). Format decoding is handled by [Symphonia](https://github.com/pdeljanov/Symphonia) by default, or by optional format-specific decoders:
 
  - FLAC by [claxon](https://github.com/ruuda/claxon).
- - MP3 by [minimp3](https://github.com/lieff/minimp3).
  - Vorbis by [lewton](https://github.com/est31/lewton).
  - WAV by [hound](https://github.com/ruud-v-a/hound).
 

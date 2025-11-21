@@ -12,7 +12,6 @@ use rstest_reuse::{self, *};
 
 #[cfg(any(
     feature = "claxon",
-    feature = "minimp3",
     feature = "symphonia-aac",
     feature = "symphonia-flac",
     feature = "symphonia-mp3",
@@ -26,10 +25,6 @@ use rstest_reuse::{self, *};
 #[cfg_attr(
     feature = "symphonia-vorbis",
     case("ogg", Duration::from_secs_f64(69.328979591), "symphonia")
-)]
-#[cfg_attr(
-    all(feature = "minimp3", not(feature = "symphonia-mp3")),
-    case("mp3", Duration::ZERO, "minimp3")
 )]
 #[cfg_attr(
     all(feature = "hound", not(feature = "symphonia-wav")),
@@ -77,7 +72,6 @@ fn get_music(format: &str) -> Decoder<impl Read + Seek> {
 
 #[cfg(any(
     feature = "claxon",
-    feature = "minimp3",
     feature = "symphonia-flac",
     feature = "symphonia-mp3",
     feature = "symphonia-isomp4",

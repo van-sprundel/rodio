@@ -284,12 +284,6 @@ impl<R: Read + Seek + Send + Sync + 'static> DecoderBuilder<R> {
             Err(data) => data,
         };
 
-        #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-        let data = match mp3::Mp3Decoder::new(data) {
-            Ok(decoder) => return Ok((DecoderImpl::Mp3(decoder), self.settings)),
-            Err(data) => data,
-        };
-
         #[cfg(feature = "symphonia")]
         {
             let mss = MediaSourceStream::new(

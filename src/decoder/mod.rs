@@ -39,7 +39,6 @@
 //! - `wav` - WAV format support
 //! - `flac` - FLAC format support
 //! - `vorbis` - Vorbis format support
-//! - `mp3` - MP3 format support via minimp3
 //! - `symphonia` - Enhanced format support via the Symphonia backend
 //!
 //! When using `symphonia`, additional formats like AAC and MP4 containers become available
@@ -67,8 +66,6 @@ pub use builder::{DecoderBuilder, Settings};
 
 #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
 mod flac;
-#[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-mod mp3;
 #[cfg(feature = "symphonia")]
 mod read_seek_source;
 #[cfg(feature = "symphonia")]
@@ -115,8 +112,6 @@ enum DecoderImpl<R: Read + Seek> {
     Vorbis(vorbis::VorbisDecoder<R>),
     #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
     Flac(flac::FlacDecoder<R>),
-    #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-    Mp3(mp3::Mp3Decoder<R>),
     #[cfg(feature = "symphonia")]
     Symphonia(symphonia::SymphoniaDecoder, PhantomData<R>),
     // This variant is here just to satisfy the compiler when there are no decoders enabled.
@@ -137,8 +132,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.next(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.next(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.next(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.next(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -154,8 +147,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.size_hint(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.size_hint(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.size_hint(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.size_hint(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -171,8 +162,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.current_span_len(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.current_span_len(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.current_span_len(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.current_span_len(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -188,8 +177,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.channels(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.channels(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.channels(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.channels(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -205,8 +192,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.sample_rate(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.sample_rate(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.sample_rate(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.sample_rate(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -228,8 +213,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.total_duration(),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.total_duration(),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.total_duration(),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.total_duration(),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -245,8 +228,6 @@ impl<R: Read + Seek> DecoderImpl<R> {
             DecoderImpl::Vorbis(source) => source.try_seek(pos),
             #[cfg(all(feature = "claxon", not(feature = "symphonia-flac")))]
             DecoderImpl::Flac(source) => source.try_seek(pos),
-            #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-            DecoderImpl::Mp3(source) => source.try_seek(pos),
             #[cfg(feature = "symphonia")]
             DecoderImpl::Symphonia(source, PhantomData) => source.try_seek(pos),
             DecoderImpl::None(_, _) => unreachable!(),
@@ -478,32 +459,6 @@ impl<R: Read + Seek + Send + Sync + 'static> Decoder<R> {
             .build()
     }
 
-    /// Builds a new decoder with MP3 format hint.
-    ///
-    /// This method provides a hint that the data is MP3 format, which may help the decoder
-    /// identify the format more quickly. However, if MP3 decoding fails, other formats
-    /// will still be attempted.
-    ///
-    /// # Errors
-    ///
-    /// Returns `DecoderError::UnrecognizedFormat` if no suitable decoder was found.
-    ///
-    /// # Examples
-    /// ```no_run
-    /// use rodio::Decoder;
-    /// use std::fs::File;
-    ///
-    /// let file = File::open("audio.mp3").unwrap();
-    /// let decoder = Decoder::new_mp3(file).unwrap();
-    /// ```
-    #[cfg(any(feature = "minimp3", feature = "symphonia-mp3"))]
-    pub fn new_mp3(data: R) -> Result<Self, DecoderError> {
-        DecoderBuilder::new()
-            .with_data(data)
-            .with_hint("mp3")
-            .build()
-    }
-
     /// Builds a new decoder with AAC format hint.
     ///
     /// This method provides a hint that the data is AAC format, which may help the decoder
@@ -649,14 +604,6 @@ where
                     let mut source = flac::FlacDecoder::new(reader).ok()?;
                     let sample = source.next();
                     (DecoderImpl::Flac(source), sample)
-                }
-                #[cfg(all(feature = "minimp3", not(feature = "symphonia-mp3")))]
-                DecoderImpl::Mp3(source) => {
-                    let mut reader = source.into_inner();
-                    reader.seek(SeekFrom::Start(0)).ok()?;
-                    let mut source = mp3::Mp3Decoder::new(reader).ok()?;
-                    let sample = source.next();
-                    (DecoderImpl::Mp3(source), sample)
                 }
                 #[cfg(feature = "symphonia")]
                 DecoderImpl::Symphonia(source, PhantomData) => {
